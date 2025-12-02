@@ -1,0 +1,7 @@
+use App\Models\SftpFile;
+
+SftpFile::create([
+    'filename' => 'monfichier.txt',
+    'content' => file_get_contents($localPath), // ou le contenu généré
+    'status' => 'pending'
+]);

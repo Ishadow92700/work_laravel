@@ -8,7 +8,11 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "league/csv": "^9.27",
+        "league/flysystem-sftp-v3": "^3.30",
+        "phpoffice/phpspreadsheet": "^5.2",
+        "phpseclib/phpseclib": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

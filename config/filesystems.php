@@ -13,7 +13,9 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    // 'sftp' is set as the default disk to enable remote file storage and access via SFTP,
+    // which is preferred over 'local' for enhanced security and centralized file management.
+    'default' => env('FILESYSTEM_DISK', 'sftp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -38,6 +40,19 @@ return [
             'report' => false,
         ],
 
+        'sftp' => [
+        'driver' => 'sftp',
+        'host' => env('SFTP_HOST', '149.202.40.76'),
+        'username' => env('SFTP_USERNAME', 'Divalto_test'),
+        'password' => env('SFTP_PASSWORD', 'E9f25F6WiyqgJ7'),
+        'root' => env('SFTP_ROOT', '/uploads/erp_to_periscope'),
+        'port' => (int) env('SFTP_PORT', 22), // <- conversion en int !
+        'passive' => env('SFTP_PASSIVE', true),
+        'timeout' => 30,
+        'throw' => false,
+        'report' => false,
+    ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
@@ -49,19 +64,19 @@ return [
 
         's3' => [
             'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
+            'key' => env('AWS_ACCESS_KEY_ID', null),
+            'secret' => env('AWS_SECRET_ACCESS_KEY', null),
+            'region' => env('AWS_DEFAULT_REGION', null),
+            'bucket' => env('AWS_BUCKET', null),
+            'url' => env('AWS_URL', ''),
+            'endpoint' => env('AWS_ENDPOINT', ''),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
             'report' => false,
         ],
-
+        
     ],
-
+    
     /*
     |--------------------------------------------------------------------------
     | Symbolic Links
