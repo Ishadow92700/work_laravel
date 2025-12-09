@@ -113,22 +113,28 @@ use App\Http\Controllers\SftpController;
 Route::get('/sftp-last-csv', [SftpController::class, 'showLastCsv']);
 */
 
-Route::prefix('sftp')->name('sftp.')->group(function () {
+/*Route::prefix('sftp')->name('sftp.')->group(function () {
     Route::get('/dashboard', [SftpController::class, 'dashboard'])->name('dashboard');
     Route::get('/import', [SftpController::class, 'import'])->name('import');   // <- important
     Route::get('/export', [SftpController::class, 'export'])->name('export');   // <- important
 });
+*/
+Route::post('/sftp/upload', [SftpController::class, 'upload'])->name('sftp.upload');
+Route::post('/sftp/export', [SftpController::class, 'export'])->name('sftp.export');
+Route::get('/sftp/download', [SftpController::class, 'download'])->name('sftp.download');
+Route::get('/sftp/dashboard', [SftpController::class, 'dashboard']);
 
 use App\Http\Controllers\OrderProcessorController;
 
 Route::get('/', [OrderProcessorController::class, 'index'])->name('upload.form');
 Route::post('/process', [OrderProcessorController::class, 'process'])->name('upload.process');
-Route::get('/download/{filename}', [OrderProcessorController::class, 'download'])->name('upload.download');
+
 
 use App\Http\Controllers\FileProcessController;
 
 Route::get('/file-process', [FileProcessController::class, 'showForm']);
 Route::post('/file-process', [FileProcessController::class, 'process'])->name('file.process');
+
 
 use App\Http\Controllers\MoulinetteController;
 
@@ -141,3 +147,22 @@ use App\Http\Controllers\NoticeController;
 Route::get('/notices', [NoticeController::class, 'index'])->name('notices.index');
 
 Route::match(['get','post'], '/notices/import', [NoticeController::class, 'import'])->name('notices.import');
+
+use App\Http\Controllers\NoticeController2;
+
+Route::get('/import-notices', [NoticeController2::class, 'import']);
+
+Route::get('/test-db-config', function() {
+    return [
+        'DB_HOST' => env('DB_HOST'),
+        'DB_DATABASE' => env('DB_DATABASE'),
+        'DB_USERNAME' => env('DB_USERNAME'),
+    ];
+});
+
+Route::get('/notices/export', [NoticeController::class, 'export'])->name('notices.export');
+
+use App\Http\Controllers\AjoutProduitController;
+
+Route::get('/ajout-produits', [AjoutProduitController::class, 'index'])->name('ajout.produits');
+Route::post('/ajout-produits', [AjoutProduitController::class, 'traiter'])->name('ajout.produits.traiter');

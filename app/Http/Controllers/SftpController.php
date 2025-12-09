@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class SftpController extends Controller
 {
     // 🟢 1️⃣ Afficher le dernier CSV
-    // 🟢 1️⃣ Afficher le dernier CSV
+
 public function dashboard()
 {
     try {
@@ -25,7 +26,7 @@ public function dashboard()
             return "Aucun fichier trouvé sur le SFTP.";
         }
 
-        // 🔹 Garde uniquement les fichiers CSV au format spécifique
+        //  Garde uniquement les fichiers CSV au format spécifique
         $files = array_filter($files, function ($f) {
             $name = basename($f);
             return preg_match('/^releve_ventes_\d{6}_\d{14}\.csv$/', $name);
@@ -46,9 +47,12 @@ public function dashboard()
         $csvContent = Storage::disk('sftp')->get($lastFile);
 
         // 🔧 Convertir en UTF-8 si ce n’est pas déjà le cas
-        if (!mb_check_encoding($csvContent, 'UTF-8')) {
-            $csvContent = mb_convert_encoding($csvContent, 'UTF-8', 'Windows-1252');
-        }
+        // Forcer la conversion en UTF-8
+        $csvContent = mb_convert_encoding($csvContent, 'UTF-8', 'Windows-1252');
+
+        // Optionnel : supprimer les caractères non imprimables
+        $csvContent = preg_replace('/[^\P{C}\n]+/u', '', $csvContent);
+
 
         // Séparer les lignes
         $lines = array_filter(explode("\n", $csvContent));
@@ -74,7 +78,7 @@ public function dashboard()
             $fournisseur = $row[3] ?? '';   // colonne D
             $maison = $row[4] ?? '';        // récupère depuis la BD si nécessaire
             $mail = $row[10] ?? '';         // colonne K
-            $pays = 'FR';
+            $pays = $row[11] ?? '';         // colonne L
             $ean = $row[13] ?? '';          // colonne N
             $titre = $row[14] ?? '';        // colonne O
 
@@ -92,6 +96,7 @@ public function dashboard()
                 $nbTitres
             ];
         }
+        
 
         // Retour à la vue ou JSON si la vue n'existe pas
         return view()->exists('sftp.dashboard')
@@ -181,5 +186,99 @@ public function dashboard()
         Storage::disk('sftp')->putFileAs('', $file, $filename);
 
         return redirect('/sftp/dashboard')->with('message', "$filename uploadé !");
+    }
+public function export()
+{
+    try {
+
+        // 1️⃣ — Requête SQL EXACTE des notices des 21 derniers jours
+        $records = DB::select("
+            SELECT 
+                ean AS EAN13,
+                title AS Titre,
+                title AS TitreMin,
+                subtitle AS TitreSous,
+                desk_label AS Generique,
+                editorial_brand AS Editeur,
+                '01/12/2099' AS EditeurMin,
+                'Collectif' AS Auteur1,
+                '01/12/2099' AS Auteur1Min,
+                '' AS Auteur2,
+                'UC à mesure fixe' AS Auteur2Min,
+                '' AS Illustrateur,
+                '' AS IllustrateurMin,
+                diffusers.name AS Diffuseur,
+                '' AS ThemeGRP,
+                '' AS ThemeID,
+                '' AS Theme,
+                '' AS Etat,
+                '' AS PresentationID,
+                '' AS Presentation,
+                '' AS Article,
+                '' AS Collection,
+                '' AS DateParution,
+                '' AS DateMaj,
+                '' AS Poids,
+                '' AS Epaisseur,
+                '' AS Hauteur,
+                '' AS Largeur,
+                '' AS Pages,
+                '' AS PrixHT,
+                '' AS TVA,
+                '' AS `Prix TTC`,
+                '' AS Dilicom,
+                '' AS Stock,
+                '' AS MotCle,
+                '' AS Resume,
+                '' AS CyberPop,
+                '' AS PreCom,
+                '' AS IDFournisseur,
+                '' AS Zone,
+                '' AS Npu,
+                '' AS ID_Octave,
+                '' AS MarketPlace
+            FROM notices
+            LEFT JOIN editors ON notices.editor_id = editors.id
+            LEFT JOIN diffusers ON editors.diffuser_id = diffusers.id
+            WHERE notices.updated_at >= DATE_SUB(NOW(), INTERVAL 21 DAY)
+        ");
+
+        if (empty($records)) {
+            return back()->with('warning', 'Aucune notice trouvée pour les 21 derniers jours.');
+        }
+
+
+        // 2️⃣ — Création automatique du CSV
+        $filename = "table_notices.csv";
+        $localPath = storage_path("app/$filename");
+
+        $csv = fopen($localPath, 'w');
+
+        // Entêtes
+        fputcsv($csv, array_keys((array)$records[0]));
+
+        // Lignes
+        foreach ($records as $row) {
+            fputcsv($csv, (array)$row);
+        }
+
+        fclose($csv);
+
+
+        // 3️⃣ — Envoi automatique sur le SFTP
+        $remotePath = "test/$filename";
+
+        Storage::disk('sftp')->put(
+            $remotePath,
+            file_get_contents($localPath)
+        );
+
+        // 4️⃣ — Message succès
+        return back()->with('success', "Fichier généré et envoyé sur le SFTP : $remotePath");
+
+    } catch (\Exception $e) {
+        return back()->with('error', "Erreur export : " . $e->getMessage());
+    }
+
     }
 }

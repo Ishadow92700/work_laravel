@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Pollen</title>
+    <title>Dashboard Sftp</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 p-10">
@@ -15,18 +15,46 @@
         </div>
     @endif
 
+    @if(session('success'))
+        <div class="mb-4 p-4 bg-green-100 text-green-800 rounded">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded">
+            {{ session('warning') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Formulaire upload --}}
     <div class="mb-6 p-4 bg-white shadow rounded">
         <form action="{{ url('/sftp/upload') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <label class="block mb-2 font-semibold">Uploader un nouveau fichier CSV :</label>
             <input type="file" name="csv_file" accept=".csv,.txt" required class="mb-2 p-2 border rounded">
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Exporter</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Uploader le fichier</button>
+        </form>
+    </div>
+
+    {{-- Bouton export --}}
+    <div class="mt-4 mb-6 p-4 bg-white shadow rounded">
+        <form action="{{ url('/sftp/export') }}" method="POST">
+            @csrf
+            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded">
+                Exporter les notices
+            </button>
         </form>
     </div>
 
     {{-- Boutons actions --}}
-    <div class="mb-6">
+    <div class="mt-4 mb-6 p-4 bg-white shadow rounded">
         <a href="{{ url('/sftp/download?file='.$lastFile) }}" class="px-4 py-2 bg-green-600 text-white rounded mr-2">Importer</a>
     </div>
 
